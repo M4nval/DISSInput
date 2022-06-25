@@ -6,55 +6,55 @@ extern thread_ctx_t *threads_ctx;
 
 static void PIN_FAST_ANALYSIS_CALL r_clrl4(THREADID tid) {
   for (size_t i = 0; i < 8; i++) {
-    RTAG[DFT_REG_RDX][i] = tag_traits<tag_t>::cleared_val;
-    RTAG[DFT_REG_RCX][i] = tag_traits<tag_t>::cleared_val;
-    RTAG[DFT_REG_RBX][i] = tag_traits<tag_t>::cleared_val;
-    RTAG[DFT_REG_RAX][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[DFT_REG_RDX][i] = tag_traits::cleared_val;
+    RTAG[DFT_REG_RCX][i] = tag_traits::cleared_val;
+    RTAG[DFT_REG_RBX][i] = tag_traits::cleared_val;
+    RTAG[DFT_REG_RAX][i] = tag_traits::cleared_val;
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrl2(THREADID tid) {
   for (size_t i = 0; i < 8; i++) {
-    RTAG[DFT_REG_RDX][i] = tag_traits<tag_t>::cleared_val;
-    RTAG[DFT_REG_RAX][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[DFT_REG_RDX][i] = tag_traits::cleared_val;
+    RTAG[DFT_REG_RAX][i] = tag_traits::cleared_val;
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrb_l(THREADID tid, uint32_t reg) {
-  RTAG[reg][0] = tag_traits<tag_t>::cleared_val;
+  RTAG[reg][0] = tag_traits::cleared_val;
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrb_u(THREADID tid, uint32_t reg) {
-  RTAG[reg][1] = tag_traits<tag_t>::cleared_val;
+  RTAG[reg][1] = tag_traits::cleared_val;
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrw(THREADID tid, uint32_t reg) {
   for (size_t i = 0; i < 2; i++) {
-    RTAG[reg][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[reg][i] = tag_traits::cleared_val;
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrl(THREADID tid, uint32_t reg) {
   for (size_t i = 0; i < 4; i++) {
-    RTAG[reg][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[reg][i] = tag_traits::cleared_val;
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrq(THREADID tid, uint32_t reg) {
   for (size_t i = 0; i < 8; i++) {
-    RTAG[reg][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[reg][i] = tag_traits::cleared_val;
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clrx(THREADID tid, uint32_t reg) {
   for (size_t i = 0; i < 16; i++) {
-    RTAG[reg][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[reg][i] = tag_traits::cleared_val;
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL r_clry(THREADID tid, uint32_t reg) {
   for (size_t i = 0; i < 16; i++) {
-    RTAG[reg][i] = tag_traits<tag_t>::cleared_val;
+    RTAG[reg][i] = tag_traits::cleared_val;
   }
 }
 

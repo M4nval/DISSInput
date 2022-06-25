@@ -75,14 +75,15 @@ tag_t get_m2r_tag(ADDRINT src, size_t len){
   tag_t src_tag_id = MTAG(src);
   if (!src_tag_id)
   {
-    return NULL;
+    return 0;
   }
-  tag_entity src_tag = tag_get(src_tag_id);
+  tag_entity* src_tag = tag_get(src_tag_id);
   ADDRINT firstAddr = getFirstAddr(src, src_tag_id);
-  LOGD("[m2r taint!]  src=%p, len=%ld, src_tag=%ld, src_tag_start_addr=%p\n", src, len, src_tag, firstAddr);
-  tag_off newOffsetBegin = src - firstAddr + src_tag.begin;
-  tag_off newOffsetEnd = (newOffsetBegin + len) >= src_tag.end ? src_tag.end : (newOffsetBegin + len);
-  return tag_alloc(newOffsetBegin, newOffsetEnd, src_tag_id);
+  LOGD("[m2r taint!]  src=%p, len=%ld, src_tag=%s, src_tag_start_addr=%p\n", (void*)src, len, tag_sprint(src_tag).c_str(), (void*)firstAddr);
+  tag_off newOffsetBegin = src - firstAddr + src_tag->begin;
+  tag_off newOffsetEnd = (newOffsetBegin + len) >= src_tag->end ? src_tag->end : (newOffsetBegin + len);
+  tag_entity* newTag = tag_alloc(newOffsetBegin, newOffsetEnd, src_tag_id);
+  return newTag->id;
 }
 
 void PIN_FAST_ANALYSIS_CALL m2r_xfer_opb_u(THREADID tid, uint32_t dst,
@@ -137,25 +138,25 @@ void x2m_op(ADDRINT dst, tag_t src_tag_id, size_t len){
   {
     return;
   }
-  tag_entity src_tag = tag_get(src_tag_id);
-  tag_entity pre_tag = tag_get(MTAG(dst-1));
-  tag_entity next_tag = tag_get(MTAG(dst+len));
+  tag_entity* src_tag = tag_get(src_tag_id);
+  tag_entity* pre_tag = tag_get(MTAG(dst-1));
+  tag_entity* next_tag = tag_get(MTAG(dst+len));
 
   ADDRINT firstAddr = dst;
   ADDRINT finalAddr = dst + len;
-  if (pre_tag && src_tag.begin == pre_tag.end){
-    firstAddr = getFirstAddr(dst, pre_tag);
+  if (pre_tag && src_tag->begin == pre_tag->end){
+    firstAddr = getFirstAddr(dst, pre_tag->id);
     src_tag = tag_combine(pre_tag, src_tag, R);
   }
-  if (pre_tag && src_tag.begin == pre_tag.end){
-    firstAddr = getFinalAddr(dst+len, next_tag);
+  if (pre_tag && src_tag->begin == pre_tag->end){
+    firstAddr = getFinalAddr(dst+len, next_tag->id);
     src_tag = tag_combine(src_tag, next_tag, L);
   }
   for (ADDRINT i = firstAddr; i < finalAddr; i++){
-    tagmap_setb(dst, src_tag);
+    tagmap_setb(dst, src_tag->id);
   }
   LOGD("[x2m taint!]  dst=%p, src_tag=%s, pre_tag=%s, next_tag=%s, updateAddr=[%p,%p)\n", 
-      dst, tag_sprint(src_tag).c_str(), tag_sprint(pre_tag).c_str(), tag_sprint(next_tag).c_str());
+      (void*)dst, tag_sprint(src_tag).c_str(), tag_sprint(pre_tag).c_str(), tag_sprint(next_tag).c_str(), (void*)firstAddr, (void*)finalAddr);
 }
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opb_u(THREADID tid, ADDRINT dst,
@@ -254,10 +255,10 @@ static void PIN_FAST_ANALYSIS_CALL r2m_xfer_opbn(THREADID tid, ADDRINT dst,
   tag_t src_tag = RTAG[DFT_REG_RAX][0];
   if (likely(EFLAGS_DF(eflags) == 0)) {
     /* EFLAGS.DF = 0 */
-    x2m_op(dst, src_tags, 8 * count);
+    x2m_op(dst, src_tag, 8 * count);
   } else {
     /* EFLAGS.DF = 1 */
-    x2m_op(dst, src_tags, 8 * count);
+    x2m_op(dst, src_tag, 8 * count);
   }
 }
 
@@ -273,7 +274,7 @@ static void PIN_FAST_ANALYSIS_CALL r2m_xfer_opwn(THREADID tid, ADDRINT dst,
   } else {
     /* EFLAGS.DF = 1 */
     for (size_t i = 0; i < (count << 1); i++) {
-      x2m_op(dst_addr, src_tag[i % 2], 16);
+      x2m_op(dst, src_tag[i % 2], 16);
     }
   }
 }
@@ -307,7 +308,6 @@ static void PIN_FAST_ANALYSIS_CALL r2m_xfer_opqn(THREADID tid, ADDRINT dst,
   } else {
     /* EFLAGS.DF = 1 */
     for (size_t i = 0; i < (count << 3); i++) {
-      size_t dst_addr = dst - (count << 2) + 1 + i;
       x2m_op(dst + i, src_tag[i % 8], 64);
     }
   }

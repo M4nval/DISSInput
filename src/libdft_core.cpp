@@ -1,11 +1,7 @@
 #include "libdft_core.h"
 #include "ins_helper.h"
 
-#include "ins_binary_op.h"
 #include "ins_clear_op.h"
-#include "ins_movsx_op.h"
-#include "ins_unitary_op.h"
-#include "ins_xchg_op.h"
 #include "ins_xfer_op.h"
 
 /* threads context */
@@ -36,12 +32,12 @@ void ins_inspect(INS ins) {
   }
 
   // LOGD("[ins] %s \n", INS_Disassemble(ins).c_str());
-  /*
+  
   char *cstr;
   cstr = new char[INS_Disassemble(ins).size() + 1];
   strcpy(cstr, INS_Disassemble(ins).c_str());
   INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)dasm, IARG_PTR, cstr, IARG_END);
-  */
+  
 
   switch (ins_indx) {
   // **** bianry ****

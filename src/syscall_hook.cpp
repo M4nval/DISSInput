@@ -121,14 +121,13 @@ static void post_read_hook(THREADID tid, syscall_ctx_t *ctx) {
     if (count > nr + 32) {
       count = nr + 32;
     }
-    tag_entity tag = tag_alloc(read_off, read_off + count, 0);
+    tag_entity* tag = tag_alloc(read_off, read_off + count, 0);
     LOGD("[read] fd: %d, addr: %p, offset: %d, size: %lu / %lu, tag:%s\n", fd,
          (char *)buf, read_off, nr, count, tag_sprint(tag).c_str());
     for (unsigned int i = 0; i < count; i++) {
-      tagmap_setb(buf + i, tag.id);
+      tagmap_setb(buf + i, tag->id);
     }
-    RTAG[DFT_REG_RAX][0] = tag_traits::cleared_val;
-
+    tagmap_setb_reg(tid, DFT_REG_RAX, 0, tag_traits::cleared_val);
   } else {
     /* clear the tag markings */
     tagmap_clrn(buf, nr);
@@ -152,12 +151,12 @@ static void post_pread64_hook(THREADID tid, syscall_ctx_t *ctx) {
       count = nr + 32;
     }
 
-    tag_entity tag = tag_alloc(read_off, read_off + count, 0);
+    tag_entity* tag = tag_alloc(read_off, read_off + count, 0);
     LOGD("[pread64] fd: %d, addr: %p, offset: %d, size: %lu / %lu, tag:%s\n", fd,
          (char *)buf, read_off, nr, count, tag_sprint(tag).c_str());
     /* set the tag markings */
     for (unsigned int i = 0; i < count; i++) {
-      tagmap_setb(buf + i, tag.id);
+      tagmap_setb(buf + i, tag->id);
     }
   } else {
     /* clear the tag markings */
@@ -182,11 +181,11 @@ static void post_mmap_hook(THREADID tid, syscall_ctx_t *ctx) {
   //       is_fuzzing_fd(fd), buf, read_off, nr);
   if (is_fuzzing_fd(fd)) {
     tainted = true;
-    tag_entity tag = tag_alloc(read_off, read_off + count, 0);
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0);
     LOGD("[mmap] fd: %d, offset: %ld, size: %lu, tag: %s\n", fd, read_off, nr, tag_sprint(tag).c_str());
 
     for (unsigned int i = 0; i < nr; i++) {
-      tagmap_setb(buf + i, tag.id);
+      tagmap_setb(buf + i, tag->id);
     }
   } else {
     tagmap_clrn(buf, nr);

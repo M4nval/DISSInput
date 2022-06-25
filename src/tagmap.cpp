@@ -70,7 +70,7 @@ inline void tag_dir_setb(tag_dir_t &dir, ADDRINT addr, tag_t const &tag) {
       libdft_die();
     }
     std::fill(new_page->tag, new_page->tag + PAGE_SIZE,
-              tag_traits<tag_t>::cleared_val);
+              tag_traits::cleared_val);
     (*table).page[VIRT2PAGE(addr)] = new_page;
   }
 
@@ -95,7 +95,7 @@ inline tag_t const *tag_dir_getb_as_ptr(tag_dir_t const &dir, ADDRINT addr) {
         return &(*page).tag[VIRT2OFFSET(addr)];
     }
   }
-  return &tag_traits<tag_t>::cleared_val;
+  return &tag_traits::cleared_val;
 }
 
 // PIN_FAST_ANALYSIS_CALL
@@ -103,12 +103,12 @@ void tagmap_setb(ADDRINT addr, tag_t const &tag) {
   tag_dir_setb(tag_dir, addr, tag);
 }
 
-/*
+
 void tagmap_setb_reg(THREADID tid, unsigned int reg_idx, unsigned int off,
                      tag_t const &tag) {
   threads_ctx[tid].vcpu.gpr[reg_idx][off] = tag;
 }
-*/
+
 tag_t tagmap_getb(ADDRINT addr) { return *tag_dir_getb_as_ptr(tag_dir, addr); }
 /*
 tag_t tagmap_getb_reg(THREADID tid, unsigned int reg_idx, unsigned int off) {
@@ -116,7 +116,7 @@ tag_t tagmap_getb_reg(THREADID tid, unsigned int reg_idx, unsigned int off) {
 }
 */
 void PIN_FAST_ANALYSIS_CALL tagmap_clrb(ADDRINT addr) {
-  tagmap_setb(addr, tag_traits<tag_t>::cleared_val);
+  tagmap_setb(addr, tag_traits::cleared_val);
 }
 
 void PIN_FAST_ANALYSIS_CALL tagmap_clrn(ADDRINT addr, UINT32 n) {
@@ -127,7 +127,7 @@ void PIN_FAST_ANALYSIS_CALL tagmap_clrn(ADDRINT addr, UINT32 n) {
 }
 /*
 tag_t tagmap_getn(ADDRINT addr, unsigned int n) {
-  tag_t ts = tag_traits<tag_t>::cleared_val;
+  tag_t ts = tag_traits::cleared_val;
   for (size_t i = 0; i < n; i++) {
     const tag_t t = tagmap_getb(addr + i);
     if (tag_is_empty(t))
@@ -140,7 +140,7 @@ tag_t tagmap_getn(ADDRINT addr, unsigned int n) {
 }
 
 tag_t tagmap_getn_reg(THREADID tid, unsigned int reg_idx, unsigned int n) {
-  tag_t ts = tag_traits<tag_t>::cleared_val;
+  tag_t ts = tag_traits::cleared_val;
   for (size_t i = 0; i < n; i++) {
     const tag_t t = tagmap_getb_reg(tid, reg_idx, i);
     if (tag_is_empty(t))
@@ -154,14 +154,14 @@ tag_t tagmap_getn_reg(THREADID tid, unsigned int reg_idx, unsigned int n) {
 */
 
 ADDRINT getFirstAddr(ADDRINT addr, tag_t tag){
-  while (MTAG(addr-1) == tag){
+  while (tagmap_getb(addr-1) == tag){
     addr--;
   }
   return addr;
 }
 
 ADDRINT getFinalAddr(ADDRINT addr, tag_t tag){
-  while (MTAG(addr) == tag){
+  while (tagmap_getb(addr) == tag){
     addr++;
   }
   return addr;

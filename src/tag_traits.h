@@ -25,7 +25,7 @@ SegTag* tag_get(tag_id t);
 void printAllTags();
 
 inline bool tag_is_empty(tag_t const &tag) {
-  return tag == tag_traits<tag_t>::cleared_val;
+  return tag == tag_traits::cleared_val;
 }
 
 #endif /* LIBDFT_TAG_TRAITS_H */
