@@ -145,25 +145,36 @@ void x2m_op(ADDRINT dst, tag_t src_tag_id, size_t len){
   {
     return;
   }
+
   tag_entity* src_tag = tag_get(src_tag_id);
   tag_entity* pre_tag = tag_get(MTAG(dst-1));
-  tag_entity* next_tag = tag_get(MTAG(dst+len));
+  tag_entity* next_tag = NULL;
 
+  bool isFullMove = src_tag->getLen() >= len;
   ADDRINT firstAddr = dst;
-  ADDRINT finalAddr = dst + len;
+  ADDRINT finalAddr = isFullMove ? (dst + len) : (dst + src_tag->getLen());
 
-  LOGD("[x2m taint!] src_tag_orig=%s", tag_sprint(src_tag).c_str());
+  LOGD("[x2m taint!] fullMov=%d, src_tag_orig=%s", isFullMove, tag_sprint(src_tag).c_str());
   if (pre_tag && src_tag->begin == pre_tag->end){
     firstAddr = getFirstAddr(dst, pre_tag->id);
     src_tag = tag_combine(pre_tag, src_tag, R);
   }
-  if (next_tag && src_tag->end == next_tag->begin){
-    finalAddr = getFinalAddr(dst+len, next_tag->id);
-    src_tag = tag_combine(src_tag, next_tag, L);
+  if (isFullMove){
+    next_tag = tag_get(MTAG(dst + src_tag->getLen()));
+    if(next_tag && src_tag->end == next_tag->begin){
+      finalAddr = getFinalAddr(dst+len, next_tag->id);
+      src_tag = tag_combine(src_tag, next_tag, L);
+    }
   }
   src_tag->temp = false;
-  for (ADDRINT i = firstAddr; i < finalAddr; i++){
+  ADDRINT i = firstAddr;
+  for (; i < finalAddr; i++){
     tagmap_setb(i, src_tag->id);
+  }
+  if (!isFullMove){
+    for (; i < (dst + len); i++){
+      tagmap_setb(i, tag_traits::cleared_val);
+    }
   }
   LOGD(", dst=%p, lent=%ld, src_tag_after=%s, pre_tag=%s, next_tag=%s, updateAddr=[%p,%p)\n", 
       (void*)dst, len, tag_sprint(src_tag).c_str(), tag_sprint(pre_tag).c_str(), tag_sprint(next_tag).c_str(), (void*)firstAddr, (void*)finalAddr);
