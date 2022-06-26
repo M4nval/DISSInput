@@ -40,9 +40,12 @@ SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent) {
 
 
 void printAllTags(){
-  printf("start print all tags(size=%ldd):\n", tags.size());
+  printf("start print all tags(size=%ld):\n", tags.size());
   for(auto i : tags){
-    printf("%s\n", i->toString().c_str());
+    if (i->temp == false)
+    {
+      printf("%s\n", i->toString().c_str());
+    }  
   }
 }
 

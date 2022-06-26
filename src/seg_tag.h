@@ -13,7 +13,7 @@ public:
   tag_id parent;
   tag_off begin;
   tag_off end;
-  bool temp = 0;
+  bool temp = false;
   SegTag(){
   }
   SegTag(tag_off begin_, tag_off end_, tag_id parent_) {

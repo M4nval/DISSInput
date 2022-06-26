@@ -79,10 +79,17 @@ tag_t get_m2r_tag(ADDRINT src, size_t len){
   }
   tag_entity* src_tag = tag_get(src_tag_id);
   ADDRINT firstAddr = getFirstAddr(src, src_tag_id);
-  LOGD("[m2r taint!]  src=%p, len=%ld, src_tag=%s, src_tag_start_addr=%p\n", (void*)src, len, tag_sprint(src_tag).c_str(), (void*)firstAddr);
+  ADDRINT finalAddr = getFinalAddr(src, src_tag_id);
+
+  LOGD("[m2r taint!]  src=%p, len=%ld, src_tag=%s, src_tag_address=[%p,%p)\n", (void*)src, len, tag_sprint(src_tag).c_str(), (void*)firstAddr, (void*)finalAddr);
   tag_off newOffsetBegin = src - firstAddr + src_tag->begin;
   tag_off newOffsetEnd = (newOffsetBegin + len) >= src_tag->end ? src_tag->end : (newOffsetBegin + len);
+  if (newOffsetBegin == src_tag->begin && newOffsetEnd == src_tag->end)
+  {
+    return src_tag_id;
+  }
   tag_entity* newTag = tag_alloc(newOffsetBegin, newOffsetEnd, src_tag_id);
+  newTag->temp = true;
   return newTag->id;
 }
 
@@ -144,19 +151,22 @@ void x2m_op(ADDRINT dst, tag_t src_tag_id, size_t len){
 
   ADDRINT firstAddr = dst;
   ADDRINT finalAddr = dst + len;
+
+  LOGD("[x2m taint!] src_tag_orig=%s", tag_sprint(src_tag).c_str());
   if (pre_tag && src_tag->begin == pre_tag->end){
     firstAddr = getFirstAddr(dst, pre_tag->id);
     src_tag = tag_combine(pre_tag, src_tag, R);
   }
-  if (pre_tag && src_tag->begin == pre_tag->end){
-    firstAddr = getFinalAddr(dst+len, next_tag->id);
+  if (next_tag && src_tag->end == next_tag->begin){
+    finalAddr = getFinalAddr(dst+len, next_tag->id);
     src_tag = tag_combine(src_tag, next_tag, L);
   }
+  src_tag->temp = false;
   for (ADDRINT i = firstAddr; i < finalAddr; i++){
-    tagmap_setb(dst, src_tag->id);
+    tagmap_setb(i, src_tag->id);
   }
-  LOGD("[x2m taint!]  dst=%p, src_tag=%s, pre_tag=%s, next_tag=%s, updateAddr=[%p,%p)\n", 
-      (void*)dst, tag_sprint(src_tag).c_str(), tag_sprint(pre_tag).c_str(), tag_sprint(next_tag).c_str(), (void*)firstAddr, (void*)finalAddr);
+  LOGD(", dst=%p, lent=%ld, src_tag_after=%s, pre_tag=%s, next_tag=%s, updateAddr=[%p,%p)\n", 
+      (void*)dst, len, tag_sprint(src_tag).c_str(), tag_sprint(pre_tag).c_str(), tag_sprint(next_tag).c_str(), (void*)firstAddr, (void*)finalAddr);
 }
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opb_u(THREADID tid, ADDRINT dst,
@@ -175,42 +185,27 @@ void PIN_FAST_ANALYSIS_CALL r2m_xfer_opb_l(THREADID tid, ADDRINT dst,
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opw(THREADID tid, ADDRINT dst,
                                          uint32_t src) {
-  tag_t *src_tags = RTAG[src];
-
-  x2m_op(dst, src_tags[0], 8);
-  x2m_op(dst + 1, src_tags[1], 8);
+  x2m_op(dst, RTAG[src][0], 16);
 }
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opl(THREADID tid, ADDRINT dst,
                                          uint32_t src) {
-  tag_t *src_tags = RTAG[src];
-
-  for (size_t i = 0; i < 4; i++)
-    x2m_op(dst + i, src_tags[i], 8);
+  x2m_op(dst, RTAG[src][0], 32);
 }
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opq(THREADID tid, ADDRINT dst,
                                          uint32_t src) {
-  tag_t *src_tags = RTAG[src];
-
-  for (size_t i = 0; i < 8; i++)
-    x2m_op(dst + i, src_tags[i], 8);
+  x2m_op(dst, RTAG[src][0], 64);
 }
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opx(THREADID tid, ADDRINT dst,
                                          uint32_t src) {
-  tag_t *src_tags = RTAG[src];
-
-  for (size_t i = 0; i < 16; i++)
-    x2m_op(dst + i, src_tags[i], 8);
+  x2m_op(dst, RTAG[src][0], 128);
 }
 
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opy(THREADID tid, ADDRINT dst,
                                          uint32_t src) {
-  tag_t *src_tags = RTAG[src];
-
-  for (size_t i = 0; i < 32; i++)
-    x2m_op(dst + i, src_tags[i], 8);
+  x2m_op(dst, RTAG[src][0], 256);
 }
 
 void PIN_FAST_ANALYSIS_CALL m2m_xfer_opb(ADDRINT dst, ADDRINT src) {
@@ -220,18 +215,15 @@ void PIN_FAST_ANALYSIS_CALL m2m_xfer_opb(ADDRINT dst, ADDRINT src) {
 }
 
 void PIN_FAST_ANALYSIS_CALL m2m_xfer_opw(ADDRINT dst, ADDRINT src) {
-  for (size_t i = 0; i < 2; i++)
-    x2m_op(dst + i, MTAG(src + i), 8);
+  x2m_op(dst, MTAG(src), 16);
 }
 
 void PIN_FAST_ANALYSIS_CALL m2m_xfer_opl(ADDRINT dst, ADDRINT src) {
-  for (size_t i = 0; i < 4; i++)
-    x2m_op(dst + i, MTAG(src + i), 8);
+  x2m_op(dst, MTAG(src), 32);
 }
 
 void PIN_FAST_ANALYSIS_CALL m2m_xfer_opq(ADDRINT dst, ADDRINT src) {
-  for (size_t i = 0; i < 8; i++)
-    x2m_op(dst + i, MTAG(src + i), 8);
+  x2m_op(dst, MTAG(src), 64);
 }
 
 void PIN_FAST_ANALYSIS_CALL m2r_xfer_opq_h(THREADID tid, uint32_t dst,
