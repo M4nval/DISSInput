@@ -242,8 +242,8 @@ static void PIN_FAST_ANALYSIS_CALL r2m_xfer_opwn(THREADID tid, ADDRINT dst,
     }
   } else {
     /* EFLAGS.DF = 1 */
-    for (size_t i = 0; i < (count << 1); i++) {
-      size_t dst_addr = dst - (count << 1) + 1 + i;
+    for (size_t i = 0; i < edge; i++) {
+      size_t dst_addr = dst - edge + 1 + i;
       r2m_op(dst_addr, src_tag[i % 2], (i==edge-1?false:true));
     }
   }
@@ -261,8 +261,8 @@ static void PIN_FAST_ANALYSIS_CALL r2m_xfer_opln(THREADID tid, ADDRINT dst,
     }
   } else {
     /* EFLAGS.DF = 1 */
-    for (size_t i = 0; i < (count << 1); i++) {
-      size_t dst_addr = dst - (count << 1) + 1 + i;
+    for (size_t i = 0; i < edge; i++) {
+      size_t dst_addr = dst - edge + 1 + i;
       r2m_op(dst_addr, src_tag[i % 4], (i==edge-1?false:true));
     }
   }
@@ -280,8 +280,8 @@ static void PIN_FAST_ANALYSIS_CALL r2m_xfer_opqn(THREADID tid, ADDRINT dst,
     }
   } else {
     /* EFLAGS.DF = 1 */
-    for (size_t i = 0; i < (count << 1); i++) {
-      size_t dst_addr = dst - (count << 1) + 1 + i;
+    for (size_t i = 0; i < edge; i++) {
+      size_t dst_addr = dst - edge + 1 + i;
       r2m_op(dst_addr, src_tag[i % 8], (i==edge-1?false:true));
     }
   }
