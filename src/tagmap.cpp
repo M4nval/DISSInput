@@ -100,7 +100,12 @@ inline tag_t const *tag_dir_getb_as_ptr(tag_dir_t const &dir, ADDRINT addr) {
 
 // PIN_FAST_ANALYSIS_CALL
 void tagmap_setb(ADDRINT addr, tag_t const &tag) {
-  tag_dir_setb(tag_dir, addr, tag);
+  if (tag){
+    tag_dir_setb(tag_dir, addr, tag);
+  } else {
+    tagmap_clrb(addr);
+  }
+  
 }
 
 
@@ -115,8 +120,53 @@ tag_t tagmap_getb_reg(THREADID tid, unsigned int reg_idx, unsigned int off) {
   return threads_ctx[tid].vcpu.gpr[reg_idx][off];
 }
 */
+
+/*
 void PIN_FAST_ANALYSIS_CALL tagmap_clrb(ADDRINT addr) {
-  tagmap_setb(addr, tag_traits::cleared_val);
+  tag_entity* existsTag = tag_get(tagmap_getb(addr));
+  if (existsTag != NULL){
+    if (existsTag->getLen() == 1){
+      tag_dir_setb(tag_dir, addr, tag_traits::cleared_val);
+      return;
+    }
+    ADDRINT firstAddr = getFirstAddr(addr, existsTag->id);
+    ADDRINT finalAddr = getFinalAddr(addr, existsTag->id);
+    if (addr != firstAddr)
+    {
+      size_t leftLen = addr - firstAddr;
+      tag_entity* newTag = tag_alloc(existsTag->begin, (existsTag->begin + leftLen), existsTag->parent, false);
+
+      LOGD("[cutoff tag left] addr=%p, existsTag=%s, newTag=%s, existsTagAddress[%p,%p), newTagAddress[%p,%p)\n", (void*)addr, tag_sprint(existsTag).c_str() ,tag_sprint(newTag).c_str(), (void*)firstAddr, (void*)finalAddr, (void*)firstAddr, (void*)(firstAddr + leftLen));
+      for (ADDRINT i = firstAddr; i < (firstAddr + leftLen); i++){
+        tag_dir_setb(tag_dir, i, newTag->id);
+      }
+    }
+    if (addr != (finalAddr - 1))
+    {
+      size_t rightLen = finalAddr - 1 - addr;
+      tag_entity* newTag = tag_alloc((existsTag->end - rightLen), existsTag->end, existsTag->parent, false);
+      LOGD("[cutoff tag right] addr=%p, existsTag=%s, newTag=%s, existsTagAddress[%p,%p), newTagAddress[%p,%p)\n", (void*)addr, tag_sprint(existsTag).c_str() ,tag_sprint(newTag).c_str(), (void*)firstAddr, (void*)finalAddr, (void*)(addr + 1), (void*)(finalAddr));
+      for (ADDRINT i = (addr + 1); i < finalAddr; i++){
+        tag_dir_setb(tag_dir, i, newTag->id);
+      }
+    }
+  }
+  tag_dir_setb(tag_dir, addr, tag_traits::cleared_val);
+}
+*/
+
+void PIN_FAST_ANALYSIS_CALL tagmap_clrb(ADDRINT addr) {
+  tag_entity* existsTag = tag_get(tagmap_getb(addr));
+  if (existsTag == NULL || existsTag->getLen() == 1){
+    tag_dir_setb(tag_dir, addr, tag_traits::cleared_val);
+    return;
+  }
+  ADDRINT firstAddr = getFirstAddr(addr, existsTag->id);
+  ADDRINT finalAddr = getFinalAddr(addr, existsTag->id);
+  LOGD("[clear mem taint tag] dst=%p, clear_address[%p,%p)\n", (void*)addr, (void*)firstAddr, (void*)finalAddr);
+  for (ADDRINT i = firstAddr; i < finalAddr; i++){
+    tag_dir_setb(tag_dir, i, tag_traits::cleared_val);
+  }
 }
 
 void PIN_FAST_ANALYSIS_CALL tagmap_clrn(ADDRINT addr, UINT32 n) {

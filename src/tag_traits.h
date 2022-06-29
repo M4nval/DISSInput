@@ -14,11 +14,11 @@ struct tag_traits {
   static tag_id cleared_val;
 };
 
-SegTag* tag_combine(SegTag* lhs, SegTag* rhs, bool lr);
+SegTag* tag_combine(SegTag* lhs, SegTag* rhs);
 
 std::string tag_sprint(SegTag* tag);
 
-SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent);
+SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp);
 
 SegTag* tag_get(tag_id t);
 

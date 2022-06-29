@@ -37,9 +37,9 @@ static void post_open_hook(THREADID tid, syscall_ctx_t *ctx) {
   if (unlikely(fd < 0))
     return;
   const char *file_name = (char *)ctx->arg[SYSCALL_ARG0];
+  LOGD("[open] fd: %d : %s \n", fd, file_name);
   if (strstr(file_name, FUZZING_INPUT_FILE) != NULL) {
     add_fuzzing_fd(fd);
-    LOGD("[open] fd: %d : %s \n", fd, file_name);
   }
 }
 
@@ -48,9 +48,9 @@ static void post_open_hook(THREADID tid, syscall_ctx_t *ctx) {
 static void post_openat_hook(THREADID tid, syscall_ctx_t *ctx) {
   const int fd = ctx->ret;
   const char *file_name = (char *)ctx->arg[SYSCALL_ARG1];
+  LOGD("[openat] fd: %d : %s \n", fd, file_name);
   if (strstr(file_name, FUZZING_INPUT_FILE) != NULL) {
     add_fuzzing_fd(fd);
-    LOGD("[openat] fd: %d : %s \n", fd, file_name);
   }
 }
 
@@ -121,7 +121,7 @@ static void post_read_hook(THREADID tid, syscall_ctx_t *ctx) {
     if (count > nr + 32) {
       count = nr + 32;
     }
-    tag_entity* tag = tag_alloc(read_off, read_off + count, 0);
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false);
     LOGD("[read] fd: %d, addr: %p, offset: %d, size: %lu / %lu, tag:%s\n", fd,
          (char *)buf, read_off, nr, count, tag_sprint(tag).c_str());
     for (unsigned int i = 0; i < count; i++) {
@@ -143,7 +143,6 @@ static void post_pread64_hook(THREADID tid, syscall_ctx_t *ctx) {
   const ADDRINT buf = ctx->arg[SYSCALL_ARG1];
   size_t count = ctx->arg[SYSCALL_ARG2];
   const unsigned int read_off = ctx->arg[SYSCALL_ARG3];
-
   if (is_fuzzing_fd(fd)) {
     tainted = true;
 
@@ -151,7 +150,7 @@ static void post_pread64_hook(THREADID tid, syscall_ctx_t *ctx) {
       count = nr + 32;
     }
 
-    tag_entity* tag = tag_alloc(read_off, read_off + count, 0);
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false);
     LOGD("[pread64] fd: %d, addr: %p, offset: %d, size: %lu / %lu, tag:%s\n", fd,
          (char *)buf, read_off, nr, count, tag_sprint(tag).c_str());
     /* set the tag markings */
@@ -181,7 +180,7 @@ static void post_mmap_hook(THREADID tid, syscall_ctx_t *ctx) {
   //       is_fuzzing_fd(fd), buf, read_off, nr);
   if (is_fuzzing_fd(fd)) {
     tainted = true;
-    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0);
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false);
     LOGD("[mmap] fd: %d, offset: %ld, size: %lu, tag: %s\n", fd, read_off, nr, tag_sprint(tag).c_str());
 
     for (unsigned int i = 0; i < nr; i++) {
