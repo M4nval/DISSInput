@@ -3,7 +3,7 @@
 The purpose of this tool is to identify the field hierarchy of any binary program input.
 These code is modified from [libdft64](https://github.com/AngoraFuzzer/libdft64).
 
-## Differences with libdft64
+## Modifications based on libdft64
 - Only consider the mov type instruction as taint propagation.
 - Replace the BDDTag in libdft64 by SegTag which is hierarchical.
 
