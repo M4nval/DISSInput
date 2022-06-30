@@ -1,4 +1,4 @@
-# : Identify Field Hierarchy of Programs's Input by Dynamic Data Flow Tracking
+# DISSInput: Identify Field Hierarchy of Programs's Input by Dynamic Data Flow Tracking
 
 The purpose of this tool is to identify the field hierarchy of any binary program input.
 These code is modified from [libdft64](https://github.com/AngoraFuzzer/libdft64).
