@@ -158,7 +158,7 @@ void ins_inspect(INS ins) {
   char *cstr;
   cstr = new char[INS_Disassemble(ins).size() + 1];
   strcpy(cstr, INS_Disassemble(ins).c_str());
-  INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)dasm, IARG_PTR, cstr, IARG_END);
+  //INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)dasm, IARG_PTR, cstr, IARG_END);
   
 
   switch (ins_indx) {
