@@ -23,6 +23,7 @@ make
 
 ### Usage
 ```shell
+cd tools
 pin -t obj-intel64/track.so -- obj-intel64/mini_test.exe  cur_input
 ```
 This step outputs all useful taint tag in a file named "tagList.out".(see the following example)
