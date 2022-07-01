@@ -48,13 +48,18 @@ SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp) {
 
 
 void printAllTags(){
-  printf("start print all tags(size=%ld):\n", tags.size());
+  FILE * fp;
+
+  fp = fopen ("tagList.out", "w+");
+
   for(auto i : tags){
     if (i->temp == false)
     {
-      printf("%s\n", i->toString().c_str());
-    }  
+      fprintf(fp, "%s\n", i->toString().c_str());
+    }
   }
+  fclose(fp);
+
 }
 
 
