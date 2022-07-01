@@ -25,6 +25,35 @@ make
 ```shell
 pin -t obj-intel64/track.so -- obj-intel64/mini_test.exe  cur_input
 ```
+This step outputs all useful taint tag in a file named "tagList.out".(see the following example)
+
+```
+{"id":1, "begin":0, "end":50, "parent":0, "temp":0}
+{"id":2, "begin":0, "end":20, "parent":1, "temp":0}
+{"id":3, "begin":0, "end":20, "parent":1, "temp":0}
+{"id":4, "begin":20, "end":25, "parent":1, "temp":0}
+{"id":5, "begin":25, "end":30, "parent":1, "temp":0}
+{"id":6, "begin":30, "end":40, "parent":1, "temp":0}
+{"id":7, "begin":30, "end":35, "parent":6, "temp":0}
+{"id":8, "begin":35, "end":40, "parent":6, "temp":0}
+{"id":9, "begin":35, "end":40, "parent":6, "temp":0}
+{"id":10, "begin":30, "end":40, "parent":1, "temp":0}
+{"id":11, "begin":30, "end":40, "parent":1, "temp":0}
+{"id":12, "begin":30, "end":50, "parent":0, "temp":0}
+{"id":13, "begin":40, "end":50, "parent":1, "temp":0}
+……
+```
+
+### Analysis
+
+```shell
+pip install pyecharts
+python result_analysis.py
+```
+This step draw the picture about the input struct by tagList.out generate by prev step.
+The output is a file named "result.html".(see the following drawing)
+![Image text](md_pic/result_example.jpg)
+
 
 #### Arguments processed by Pin
   * `-follow_execv`: Instructs Pin to also instrument all processes spawned
