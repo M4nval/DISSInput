@@ -23,4 +23,3 @@ tool: $(LIBDFT_TOOL)
 clean:
 	cd $(LIBDFT_SRC) && make clean
 	cd $(LIBDFT_TOOL) && make clean
-	rm -f *.log
