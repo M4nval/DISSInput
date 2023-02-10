@@ -53,7 +53,8 @@ python result_analysis.py
 ```
 This step draw the picture about the input struct by tagList.out generate by prev step.
 The output is a file named "result.html".(see the following drawing)
-![Image text](md_pic/result_example.jpg)
+![image](https://user-images.githubusercontent.com/13733408/217983827-faf238d2-2150-407f-9ff8-f9712f883888.png)
+
 
 
 #### Arguments processed by Pin
