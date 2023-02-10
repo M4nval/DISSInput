@@ -348,8 +348,8 @@ inline size_t REG_INDX(REG reg) {
 
 #define M2M_CALL(fn)                                                           \
   INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)fn,                    \
-                           IARG_FAST_ANALYSIS_CALL, IARG_MEMORYWRITE_EA,       \
-                           IARG_MEMORYREAD_EA, IARG_END);
+                           IARG_FAST_ANALYSIS_CALL, IARG_THREAD_ID,            \
+                           IARG_MEMORYWRITE_EA, IARG_MEMORYREAD_EA, IARG_END);
 
 #define M_CLEAR_N(n)                                                           \
   INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)tagmap_clrn,                     \

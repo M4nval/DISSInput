@@ -20,7 +20,7 @@ SegTag* tag_combine(SegTag* lhs, SegTag* rhs) {
     return parentTag;
   }
   
-  SegTag* newTag = tag_alloc(lhs->begin, rhs->end, lhs->parent, false);
+  SegTag* newTag = tag_alloc(lhs->begin, rhs->end, lhs->parent, false, lhs->callstack);
   lhs->parent = newTag->id;
   rhs->parent = newTag->id;
   lhs->temp = true;
@@ -38,8 +38,8 @@ std::string tag_sprint(SegTag* tag) {
   return tag->toString();
 }
 
-SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp) {
-  SegTag* newTag = new SegTag(begin, end, parent);
+SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp, uint32_t callstack) {
+  SegTag* newTag = new SegTag(begin, end, parent, callstack);
   newTag->temp = temp;
   tags.push_back(newTag);
   LOGD("[gen new tag!] tag:%s\n", newTag->toString().c_str());
@@ -48,6 +48,7 @@ SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp) {
 
 
 void printAllTags(){
+  printf("start printAllTags\n");
   FILE * fp;
 
   fp = fopen ("tagList.out", "w+");

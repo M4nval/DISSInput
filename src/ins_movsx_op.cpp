@@ -134,7 +134,7 @@ static void PIN_FAST_ANALYSIS_CALL _movsx_m2r_opwb(THREADID tid, uint32_t dst,
   tag_t *rtag_dst = RTAG[dst];
 
   /* update the destination (xfer) */
-  rtag_dst[0] = get_m2r_tag(src);
+  rtag_dst[0] = get_m2r_tag(src, threads_ctx[tid].callstack);
   rtag_dst[1] = tag_traits::cleared_val;
 }
 
@@ -144,7 +144,7 @@ static void PIN_FAST_ANALYSIS_CALL _movsx_m2r_oplb(THREADID tid, uint32_t dst,
   tag_t *rtag_dst = RTAG[dst];
 
   /* update the destination (xfer) */
-  rtag_dst[0] = get_m2r_tag(src);
+  rtag_dst[0] = get_m2r_tag(src, threads_ctx[tid].callstack);
   for (size_t i = 1; i < 4; i++)
     rtag_dst[i] = tag_traits::cleared_val;
 }
@@ -155,7 +155,7 @@ static void PIN_FAST_ANALYSIS_CALL _movsx_m2r_opqb(THREADID tid, uint32_t dst,
   tag_t *rtag_dst = RTAG[dst];
 
   /* update the destination (xfer) */
-  rtag_dst[0] = get_m2r_tag(src);
+  rtag_dst[0] = get_m2r_tag(src, threads_ctx[tid].callstack);
   for (size_t i = 0; i < 8; i++)
     rtag_dst[i] = tag_traits::cleared_val;
 }
@@ -167,7 +167,7 @@ static void PIN_FAST_ANALYSIS_CALL _movsx_m2r_oplw(THREADID tid, uint32_t dst,
 
   /* update the destination (xfer) */
   for (size_t i = 0; i < 2; i++)
-    rtag_dst[i] = get_m2r_tag(src + i);
+    rtag_dst[i] = get_m2r_tag(src + i, threads_ctx[tid].callstack);
   for (size_t i = 2; i < 4; i++)
     rtag_dst[i] = tag_traits::cleared_val;
 }
@@ -179,7 +179,7 @@ static void PIN_FAST_ANALYSIS_CALL _movsx_m2r_opqw(THREADID tid, uint32_t dst,
 
   /* update the destination (xfer) */
   for (size_t i = 0; i < 2; i++)
-    rtag_dst[i] = get_m2r_tag(src + i);
+    rtag_dst[i] = get_m2r_tag(src + i, threads_ctx[tid].callstack);
   for (size_t i = 2; i < 8; i++)
     rtag_dst[i] = tag_traits::cleared_val;
 }
@@ -191,7 +191,7 @@ static void PIN_FAST_ANALYSIS_CALL _movsx_m2r_opql(THREADID tid, uint32_t dst,
 
   /* update the destination (xfer) */
   for (size_t i = 0; i < 4; i++)
-    rtag_dst[i] = get_m2r_tag(src + i);
+    rtag_dst[i] = get_m2r_tag(src + i, threads_ctx[tid].callstack);
   for (size_t i = 4; i < 8; i++)
     rtag_dst[i] = tag_traits::cleared_val;
 }

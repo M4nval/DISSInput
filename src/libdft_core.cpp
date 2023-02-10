@@ -50,24 +50,26 @@ static void PIN_FAST_ANALYSIS_CALL _cqo(THREADID tid) {
 }
 
 static void PIN_FAST_ANALYSIS_CALL m2r_restore_opw(THREADID tid, ADDRINT src) {
+  uint32_t callstack = threads_ctx[tid].callstack;
   for (size_t i = 0; i < 8; i++) {
     if (i == DFT_REG_RSP)
       continue;
     size_t offset = (i < DFT_REG_RSP) ? (i << 1) : ((i - 1) << 1);
-    RTAG[DFT_REG_RDI + i][0] = get_m2r_tag(src + offset);
-    RTAG[DFT_REG_RDI + i][1] = get_m2r_tag(src + offset + 1);
+    RTAG[DFT_REG_RDI + i][0] = get_m2r_tag(src + offset, callstack);
+    RTAG[DFT_REG_RDI + i][1] = get_m2r_tag(src + offset + 1, callstack);
   }
 }
 
 static void PIN_FAST_ANALYSIS_CALL m2r_restore_opl(THREADID tid, ADDRINT src) {
+  uint32_t callstack = threads_ctx[tid].callstack;
   for (size_t i = 0; i < 8; i++) {
     if (i == DFT_REG_RSP)
       continue;
     size_t offset = (i < DFT_REG_RSP) ? (i << 2) : ((i - 1) << 2);
-    RTAG[DFT_REG_RDI + i][0] = get_m2r_tag(src + offset);
-    RTAG[DFT_REG_RDI + i][1] = get_m2r_tag(src + offset + 1);
-    RTAG[DFT_REG_RDI + i][2] = get_m2r_tag(src + offset + 2);
-    RTAG[DFT_REG_RDI + i][3] = get_m2r_tag(src + offset + 3);
+    RTAG[DFT_REG_RDI + i][0] = get_m2r_tag(src + offset, callstack);
+    RTAG[DFT_REG_RDI + i][1] = get_m2r_tag(src + offset + 1, callstack);
+    RTAG[DFT_REG_RDI + i][2] = get_m2r_tag(src + offset + 2, callstack);
+    RTAG[DFT_REG_RDI + i][3] = get_m2r_tag(src + offset + 3, callstack);
   }
 }
 
@@ -131,7 +133,20 @@ void ins_cmp_op(INS ins) {
   }
 }
 
-VOID dasm(char *s) { LOGD("[ins] %s\n", s); }
+
+void PIN_FAST_ANALYSIS_CALL print_call_stack(THREADID tid, ADDRINT addr) {
+  threads_ctx[tid].callstack = addr;
+  for (int i = 0; i < 4; i++){
+    ADDRINT nextAddr = threads_ctx[tid].call_stack_5[i + 1];
+    threads_ctx[tid].callstack = threads_ctx[tid].callstack ^ nextAddr;
+    threads_ctx[tid].call_stack_5[i] = nextAddr;
+    //LOGD("%ld-", threads_ctx[tid].call_stack_5[i]);
+  }
+  threads_ctx[tid].call_stack_5[4] = addr;
+  //LOGD("%ld-[%u]\n", addr, threads_ctx[tid].callstack);
+}
+
+VOID dasm(THREADID tid, char *s) { LOGD("[ins] %s\n", s); }
 
 /*
  * instruction inspection (instrumentation function)
@@ -153,12 +168,17 @@ void ins_inspect(INS ins) {
     return;
   }
 
-  // LOGD("[ins] %s \n", INS_Disassemble(ins).c_str());
-  
+  /*
   char *cstr;
   cstr = new char[INS_Disassemble(ins).size() + 1];
   strcpy(cstr, INS_Disassemble(ins).c_str());
-  //INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)dasm, IARG_PTR, cstr, IARG_END);
+  INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)dasm, IARG_THREAD_ID, IARG_PTR, cstr, IARG_END);
+  */
+
+  if (INS_IsCall(ins)){
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)print_call_stack, IARG_FAST_ANALYSIS_CALL,     \
+                 IARG_THREAD_ID, IARG_ADDRINT, INS_Address(ins), IARG_END);
+  }
   
 
   switch (ins_indx) {

@@ -51,10 +51,10 @@ void PIN_FAST_ANALYSIS_CALL r2m_xfer_opx(THREADID tid, ADDRINT dst,
 void PIN_FAST_ANALYSIS_CALL r2m_xfer_opy(THREADID tid, ADDRINT dst,
                                          uint32_t src);
 
-void PIN_FAST_ANALYSIS_CALL m2m_xfer_opb(ADDRINT dst, ADDRINT src);
-void PIN_FAST_ANALYSIS_CALL m2m_xfer_opw(ADDRINT dst, ADDRINT src);
-void PIN_FAST_ANALYSIS_CALL m2m_xfer_opl(ADDRINT dst, ADDRINT src);
-void PIN_FAST_ANALYSIS_CALL m2m_xfer_opq(ADDRINT dst, ADDRINT src);
+void PIN_FAST_ANALYSIS_CALL m2m_xfer_opb(THREADID tid, ADDRINT dst, ADDRINT src);
+void PIN_FAST_ANALYSIS_CALL m2m_xfer_opw(THREADID tid, ADDRINT dst, ADDRINT src);
+void PIN_FAST_ANALYSIS_CALL m2m_xfer_opl(THREADID tid, ADDRINT dst, ADDRINT src);
+void PIN_FAST_ANALYSIS_CALL m2m_xfer_opq(THREADID tid, ADDRINT dst, ADDRINT src);
 
 void ins_xfer_op(INS ins);
 void ins_xfer_op_predicated(INS ins);

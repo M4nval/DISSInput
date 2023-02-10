@@ -18,7 +18,7 @@ SegTag* tag_combine(SegTag* lhs, SegTag* rhs);
 
 std::string tag_sprint(SegTag* tag);
 
-SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp);
+SegTag* tag_alloc(tag_off begin, tag_off end, tag_id parent, bool temp, uint32_t callstack);
 
 SegTag* tag_get(tag_id t);
 

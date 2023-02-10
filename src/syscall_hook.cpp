@@ -7,38 +7,48 @@
 #include "tagmap.h"
 
 #include <iostream>
-#include <set>
+#include <unordered_map>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <stdlib.h>
 
-#define FUZZING_INPUT_FILE "cur_input"
+/* threads context */
+extern thread_ctx_t *threads_ctx;
+
+void get_file_name(char* path, char* fn){
+    char *p;
+    strcpy(fn,(p=strrchr(path,'/')) ? p+1 : path);
+}
 
 extern syscall_desc_t syscall_desc[SYSCALL_MAX];
-std::set<int> fuzzing_fd_set;
+std::unordered_map<int, size_t> fuzzing_fd_map;
 static unsigned int stdin_read_off = 0;
 static bool tainted = false;
-
+static const char* fuzzing_input_file;
 inline bool is_tainted() { return tainted; }
 
+
 static inline bool is_fuzzing_fd(int fd) {
-  return fd == STDIN_FILENO || fuzzing_fd_set.count(fd) > 0;
+  return fd == STDIN_FILENO || fuzzing_fd_map.count(fd) > 0;
 }
 
 static inline void add_fuzzing_fd(int fd) {
   if (fd > 0)
-    fuzzing_fd_set.insert(fd);
+    fuzzing_fd_map.insert(std::make_pair(fd, 0));
 }
 
-static inline void remove_fuzzing_fd(int fd) { fuzzing_fd_set.erase(fd); }
+static inline void remove_fuzzing_fd(int fd) { fuzzing_fd_map.erase(fd); }
 
 /* __NR_open post syscall hook */
 static void post_open_hook(THREADID tid, syscall_ctx_t *ctx) {
   const int fd = ctx->ret;
   if (unlikely(fd < 0))
     return;
-  const char *file_name = (char *)ctx->arg[SYSCALL_ARG0];
-  LOGD("[open] fd: %d : %s \n", fd, file_name);
-  if (strstr(file_name, FUZZING_INPUT_FILE) != NULL) {
+  char *file_path = (char *)ctx->arg[SYSCALL_ARG0];
+  char file_name[100];
+  get_file_name(file_path, file_name);
+  LOGD("[open] fd: %d : %s (file_name=%s # %s)\n", fd, file_path, file_name, fuzzing_input_file);
+  if (strcmp(file_name, fuzzing_input_file) == 0) {
     add_fuzzing_fd(fd);
   }
 }
@@ -47,9 +57,11 @@ static void post_open_hook(THREADID tid, syscall_ctx_t *ctx) {
 // int openat(int dirfd, const char *pathname, int flags, mode_t mode);
 static void post_openat_hook(THREADID tid, syscall_ctx_t *ctx) {
   const int fd = ctx->ret;
-  const char *file_name = (char *)ctx->arg[SYSCALL_ARG1];
-  LOGD("[openat] fd: %d : %s \n", fd, file_name);
-  if (strstr(file_name, FUZZING_INPUT_FILE) != NULL) {
+  char *file_path = (char *)ctx->arg[SYSCALL_ARG1];
+  char file_name[100];
+  get_file_name(file_path, file_name); 
+  LOGD("[openat] fd: %d : %s (file_name=%s # %s)\n", fd, file_path, file_name, fuzzing_input_file);
+  if (strcmp(file_name, fuzzing_input_file) == 0) {
     add_fuzzing_fd(fd);
   }
 }
@@ -89,6 +101,7 @@ static void post_close_hook(THREADID tid, syscall_ctx_t *ctx) {
 }
 
 static void post_read_hook(THREADID tid, syscall_ctx_t *ctx) {
+  
   /* read() was not successful; optimized branch */
   const size_t nr = ctx->ret;
   if (unlikely(nr <= 0))
@@ -100,6 +113,7 @@ static void post_read_hook(THREADID tid, syscall_ctx_t *ctx) {
 
   /* taint-source */
   if (is_fuzzing_fd(fd)) {
+    std::unordered_map<int, size_t>::iterator it = fuzzing_fd_map.find(fd);
     tainted = true;
 
     unsigned int read_off = 0;
@@ -113,16 +127,21 @@ static void post_read_hook(THREADID tid, syscall_ctx_t *ctx) {
       read_off -= nr; // post
     }
 
-
-
-    /* set the tag markings */
+    if ((*it).second >= read_off + nr){
+      LOGD("[read] duplicate read [%p, %p).\n", (char *)buf, (char *)(buf + nr));
+      tagmap_clrn(buf, nr);
+      return;
+    }
+    (*it).second = read_off + nr;
+    /* set the tag markings 
     // Attn: use count replace nr
     // But count may be very very large!
-    if (count > nr + 32) {
-      count = nr + 32;
+    if (count > nr) {
+      count = nr;
     }
-    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false);
-    LOGD("[read] fd: %d, addr: %p, offset: %d, size: %lu / %lu, tag:%s\n", fd,
+    */
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false, threads_ctx[tid].callstack);
+    LOGD("[read] fd: %d, addr: %p, offset: %d, readSize: %lu / %lu, tag:%s\n", fd,
          (char *)buf, read_off, nr, count, tag_sprint(tag).c_str());
     for (unsigned int i = 0; i < count; i++) {
       tagmap_setb(buf + i, tag->id);
@@ -146,11 +165,13 @@ static void post_pread64_hook(THREADID tid, syscall_ctx_t *ctx) {
   if (is_fuzzing_fd(fd)) {
     tainted = true;
 
+    /*
     if (count > nr + 32) {
       count = nr + 32;
     }
+    */
 
-    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false);
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false, threads_ctx[tid].callstack);
     LOGD("[pread64] fd: %d, addr: %p, offset: %d, size: %lu / %lu, tag:%s\n", fd,
          (char *)buf, read_off, nr, count, tag_sprint(tag).c_str());
     /* set the tag markings */
@@ -180,7 +201,7 @@ static void post_mmap_hook(THREADID tid, syscall_ctx_t *ctx) {
   //       is_fuzzing_fd(fd), buf, read_off, nr);
   if (is_fuzzing_fd(fd)) {
     tainted = true;
-    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false);
+    tag_entity* tag = tag_alloc(read_off, read_off + nr, 0, false, threads_ctx[tid].callstack);
     LOGD("[mmap] fd: %d, offset: %ld, size: %lu, tag: %s\n", fd, read_off, nr, tag_sprint(tag).c_str());
 
     for (unsigned int i = 0; i < nr; i++) {
@@ -202,7 +223,7 @@ static void post_munmap_hook(THREADID tid, syscall_ctx_t *ctx) {
   tagmap_clrn(buf, nr);
 }
 
-void hook_file_syscall() {
+void hook_file_syscall(const char* inputFileName) {
   (void)syscall_set_post(&syscall_desc[__NR_open], post_open_hook);
   (void)syscall_set_post(&syscall_desc[__NR_openat], post_openat_hook);
   (void)syscall_set_post(&syscall_desc[__NR_dup], post_dup_hook);
@@ -214,4 +235,5 @@ void hook_file_syscall() {
   (void)syscall_set_post(&syscall_desc[__NR_pread64], post_pread64_hook);
   (void)syscall_set_post(&syscall_desc[__NR_mmap], post_mmap_hook);
   (void)syscall_set_post(&syscall_desc[__NR_munmap], post_munmap_hook);
+  fuzzing_input_file = inputFileName;
 }

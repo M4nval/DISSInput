@@ -36,6 +36,8 @@
 #include "libdft_core.h"
 #include "syscall_desc.h"
 #include "syscall_hook.h"
+#include "trimmer.h"
+
 
 /* threads context counter */
 static size_t tctx_ct = 0;
@@ -349,8 +351,9 @@ static inline int thread_ctx_init(void) {
   return 0;
 }
 
-static VOID print_info(INT32 code, VOID* v){
+static VOID trim_func(INT32 code, VOID* v){
   printAllTags();
+  startTrim();
 }
 
 
@@ -392,7 +395,7 @@ int libdft_init() {
   /* register trace_ins() to be called for every trace */
   TRACE_AddInstrumentFunction(trace_inspect, NULL);
 
-  PIN_AddFiniFunction(print_info, NULL);
+  PIN_AddFiniFunction(trim_func, NULL);
 
   setvbuf(stdout, NULL, _IONBF, 0);
   /* success */

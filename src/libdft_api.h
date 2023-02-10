@@ -70,6 +70,8 @@ typedef struct {
   vcpu_ctx_t vcpu;           /* VCPU context */
   syscall_ctx_t syscall_ctx; /* syscall context */
   UINT32 syscall_nr;
+  ADDRINT call_stack_5[5];
+  uint32_t callstack;
 } thread_ctx_t;
 
 /* instruction (ins) descriptor */

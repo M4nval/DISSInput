@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -14,17 +15,29 @@ public:
   tag_off begin;
   tag_off end;
   bool temp = false;
+  uint32_t callstack;
   SegTag(){
   }
-  SegTag(tag_off begin_, tag_off end_, tag_id parent_) {
+
+  SegTag(tag_id id_, tag_id parent_, tag_off begin_, tag_off end_, bool temp_, uint32_t callstack_) {
+    begin = begin_;
+    end = end_;
+    parent = parent_;
+    id = id_;
+    temp = temp_;
+    callstack = callstack_;
+  };
+
+  SegTag(tag_off begin_, tag_off end_, tag_id parent_, uint32_t callstack_) {
     begin = begin_;
     end = end_;
     parent = parent_;
     id = g_index++;
+    callstack = callstack_;
   };
   std::string toString(){
-      char buf[64];
-      sprintf(buf, "{\"id\":%d, \"begin\":%d, \"end\":%d, \"parent\":%d, \"temp\":%d}", id, begin, end, parent, temp);
+      char buf[128];
+      sprintf(buf, "{\"id\":%d, \"begin\":%d, \"end\":%d, \"parent\":%d, \"temp\":%d, \"callstack\":%d}", id, begin, end, parent, temp, callstack);
       std::string s(buf);
       return s;
   }

@@ -3,6 +3,6 @@
 #define __SYSCALL_HOOK_H__
 
 bool is_tainted();
-void hook_file_syscall();
+void hook_file_syscall(const char* inputFileName);
 
 #endif

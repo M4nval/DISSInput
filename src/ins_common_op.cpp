@@ -3,7 +3,7 @@
 
 
 
-tag_t get_m2r_tag(ADDRINT src){
+tag_t get_m2r_tag(ADDRINT src, uint32_t callstack){
   tag_t src_tag_id = MTAG(src);
   if (!src_tag_id)
   {
@@ -11,16 +11,15 @@ tag_t get_m2r_tag(ADDRINT src){
   }
   tag_entity* src_tag = tag_get(src_tag_id);
   ADDRINT firstAddr = getFirstAddr(src, src_tag_id);
-  ADDRINT finalAddr = getFinalAddr(src, src_tag_id);
 
-  LOGD("[m2r taint!]  src=%p, src_tag=%s, src_tag_address=[%p,%p)\n", (void*)src, tag_sprint(src_tag).c_str(), (void*)firstAddr, (void*)finalAddr);
+  LOGD("[m2r taint!]  src=%p, src_tag=%s, src_tag_address=[%p,%p)\n", (void*)src, tag_sprint(src_tag).c_str(), (void*)firstAddr, (void*)(getFinalAddr(src, src_tag_id) + 1));
   tag_off newOffset = src - firstAddr + src_tag->begin;
   if (newOffset == src_tag->begin && src_tag->getLen() == 1)
   {
     return src_tag_id;
   }
   
-  tag_entity* newTag = tag_alloc(newOffset, (newOffset + 1), src_tag_id, true);
+  tag_entity* newTag = tag_alloc(newOffset, (newOffset + 1), src_tag_id, true, callstack);
   return newTag->id;
 }
 

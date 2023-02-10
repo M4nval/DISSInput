@@ -4,6 +4,13 @@
 #include "pin.H"
 #include "syscall_hook.h"
 #include <iostream>
+#include "trimmer.h"
+#include <unistd.h>
+
+using namespace std;
+
+
+KNOB<string> KnobInputFileName(KNOB_MODE_WRITEONCE, "pintool", "input_name", "", "specify input file name");
 
 int main(int argc, char *argv[]) {
 
@@ -20,10 +27,14 @@ int main(int argc, char *argv[]) {
     std::cerr << "Sth error libdft_init." << std::endl;
     return -1;
   }
+  if (KnobInputFileName.Value().length() <= 0){
+    std::cerr << "lack param \"input_name\"" << std::endl;
+    return -1;
+  }
 
-  hook_file_syscall();
+  hook_file_syscall(KnobInputFileName.Value().c_str());
 
   PIN_StartProgram();
-
+  
   return 0;
 }

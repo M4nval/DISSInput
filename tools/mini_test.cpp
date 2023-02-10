@@ -11,6 +11,8 @@ int main(int argc, char **argv) {
 
   FILE *fp;
   char buf[255];
+  memset(buf, 0x00, 255);
+
   char answer[] = "hello";
   size_t ret = 5;
 
@@ -29,13 +31,14 @@ int main(int argc, char **argv) {
   // dfsan_read_label(&(len), sizeof *buf);
   while(fgets(buf, 100, fp)){
     i ++;
-    if (!strncmp(buf, answer, 100)){
+    if (!strncmp(buf, answer, 5)){
       i = 0;
       j ++;
       fprintf(stdout, "right!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     } else {
       fprintf(stdout, "wrong!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     }
+    memset(buf, 0x00, 255);
   }
   fclose(fp);
   return 0;

@@ -125,10 +125,11 @@ static ADDRINT PIN_FAST_ANALYSIS_CALL _cmpxchg_m2r_opq_fast(THREADID tid,
   for (size_t i = 0; i < 8; i++)
     RTAG[DFT_REG_HELPER1][i] = save_tags[i];
 
-  tag_t src_tags[] = {get_m2r_tag(src),     get_m2r_tag(src + 1),
-                      get_m2r_tag(src + 2), get_m2r_tag(src + 3),
-                      get_m2r_tag(src + 4), get_m2r_tag(src + 5),
-                      get_m2r_tag(src + 6), get_m2r_tag(src + 7)};
+  uint32_t callstack = threads_ctx[tid].callstack;
+  tag_t src_tags[] = {get_m2r_tag(src, callstack),     get_m2r_tag(src + 1, callstack),
+                      get_m2r_tag(src + 2, callstack), get_m2r_tag(src + 3, callstack),
+                      get_m2r_tag(src + 4, callstack), get_m2r_tag(src + 5, callstack),
+                      get_m2r_tag(src + 6, callstack), get_m2r_tag(src + 7, callstack)};
   for (size_t i = 0; i < 8; i++) {
     RTAG[DFT_REG_RAX][i] = src_tags[i];
   }
@@ -145,9 +146,9 @@ static ADDRINT PIN_FAST_ANALYSIS_CALL _cmpxchg_m2r_opl_fast(THREADID tid,
                        RTAG[DFT_REG_RAX][2], RTAG[DFT_REG_RAX][3]};
   for (size_t i = 0; i < 4; i++)
     RTAG[DFT_REG_HELPER1][i] = save_tags[i];
-
-  tag_t src_tags[] = {get_m2r_tag(src), get_m2r_tag(src + 1),
-                      get_m2r_tag(src + 2), get_m2r_tag(src + 3)};
+  uint32_t callstack = threads_ctx[tid].callstack;
+  tag_t src_tags[] = {get_m2r_tag(src, callstack), get_m2r_tag(src + 1, callstack),
+                      get_m2r_tag(src + 2, callstack), get_m2r_tag(src + 3, callstack)};
   for (size_t i = 0; i < 4; i++) {
     RTAG[DFT_REG_RAX][i] = src_tags[i];
   }
@@ -194,7 +195,7 @@ static ADDRINT PIN_FAST_ANALYSIS_CALL _cmpxchg_m2r_opw_fast(THREADID tid,
   for (size_t i = 0; i < 4; i++)
     RTAG[DFT_REG_HELPER1][i] = save_tags[i];
 
-  tag_t src_tags[] = {get_m2r_tag(src), get_m2r_tag(src + 1)};
+  tag_t src_tags[] = {get_m2r_tag(src, threads_ctx[tid].callstack), get_m2r_tag(src + 1, threads_ctx[tid].callstack)};
   for (size_t i = 0; i < 2; i++) {
     RTAG[DFT_REG_RAX][i] = src_tags[i];
   }
@@ -287,7 +288,7 @@ static void PIN_FAST_ANALYSIS_CALL _xchg_m2r_opb_u(THREADID tid, uint32_t dst,
 
 
   /* swap */
-  RTAG[dst][1] = get_m2r_tag(src);
+  RTAG[dst][1] = get_m2r_tag(src, threads_ctx[tid].callstack);
   r2m_op(src, tmp_tag, false);
 }
 static void PIN_FAST_ANALYSIS_CALL _xchg_m2r_opb_l(THREADID tid, uint32_t dst,
@@ -296,7 +297,7 @@ static void PIN_FAST_ANALYSIS_CALL _xchg_m2r_opb_l(THREADID tid, uint32_t dst,
   tag_t tmp_tag = RTAG[dst][0];
 
   /* swap */
-  RTAG[dst][0] = get_m2r_tag(src);
+  RTAG[dst][0] = get_m2r_tag(src, threads_ctx[tid].callstack);
   r2m_op(src, tmp_tag, false);
 }
 
@@ -306,8 +307,8 @@ static void PIN_FAST_ANALYSIS_CALL _xchg_m2r_opw(THREADID tid, uint32_t dst,
   tag_t tmp_tag[] = R16TAG(dst);
 
   /* swap */
-  RTAG[dst][0] = get_m2r_tag(src);
-  RTAG[dst][1] = get_m2r_tag(src + 1);
+  RTAG[dst][0] = get_m2r_tag(src, threads_ctx[tid].callstack);
+  RTAG[dst][1] = get_m2r_tag(src + 1, threads_ctx[tid].callstack);
   r2m_op(src, tmp_tag[0], true);
   r2m_op(src + 1, tmp_tag[1], false);
 }
@@ -317,15 +318,16 @@ static void PIN_FAST_ANALYSIS_CALL _xchg_m2r_opq(THREADID tid, uint32_t dst,
   /* temporary tag value */
   tag_t tmp_tag[] = R64TAG(dst);
 
+  uint32_t callstack = threads_ctx[tid].callstack;
   /* swap */
-  RTAG[dst][0] = get_m2r_tag(src);
-  RTAG[dst][1] = get_m2r_tag(src + 1);
-  RTAG[dst][2] = get_m2r_tag(src + 2);
-  RTAG[dst][3] = get_m2r_tag(src + 3);
-  RTAG[dst][4] = get_m2r_tag(src + 4);
-  RTAG[dst][5] = get_m2r_tag(src + 5);
-  RTAG[dst][6] = get_m2r_tag(src + 6);
-  RTAG[dst][7] = get_m2r_tag(src + 7);
+  RTAG[dst][0] = get_m2r_tag(src, callstack);
+  RTAG[dst][1] = get_m2r_tag(src + 1, callstack);
+  RTAG[dst][2] = get_m2r_tag(src + 2, callstack);
+  RTAG[dst][3] = get_m2r_tag(src + 3, callstack);
+  RTAG[dst][4] = get_m2r_tag(src + 4, callstack);
+  RTAG[dst][5] = get_m2r_tag(src + 5, callstack);
+  RTAG[dst][6] = get_m2r_tag(src + 6, callstack);
+  RTAG[dst][7] = get_m2r_tag(src + 7, callstack);
 
   r2m_op(src, tmp_tag[0], true);
   r2m_op(src + 1, tmp_tag[1], true);
@@ -342,11 +344,12 @@ static void PIN_FAST_ANALYSIS_CALL _xchg_m2r_opl(THREADID tid, uint32_t dst,
   /* temporary tag value */
   tag_t tmp_tag[] = R32TAG(dst);
 
+  uint32_t callstack = threads_ctx[tid].callstack;
   /* swap */
-  RTAG[dst][0] = get_m2r_tag(src);
-  RTAG[dst][1] = get_m2r_tag(src + 1);
-  RTAG[dst][2] = get_m2r_tag(src + 2);
-  RTAG[dst][3] = get_m2r_tag(src + 3);
+  RTAG[dst][0] = get_m2r_tag(src, callstack);
+  RTAG[dst][1] = get_m2r_tag(src + 1, callstack);
+  RTAG[dst][2] = get_m2r_tag(src + 2, callstack);
+  RTAG[dst][3] = get_m2r_tag(src + 3, callstack);
 
   r2m_op(src, tmp_tag[0], true);
   r2m_op(src + 1, tmp_tag[1], true);
@@ -405,14 +408,14 @@ static void PIN_FAST_ANALYSIS_CALL _xadd_r2r_opq(THREADID tid, uint32_t dst,
 
 static void PIN_FAST_ANALYSIS_CALL _xadd_r2m_opb_u(THREADID tid, ADDRINT dst,
                                                    uint32_t src) {
-  tag_t dst_tag = get_m2r_tag(dst);
+  tag_t dst_tag = get_m2r_tag(dst, threads_ctx[tid].callstack);
 
   RTAG[src][1] = dst_tag;
 }
 
 static void PIN_FAST_ANALYSIS_CALL _xadd_r2m_opb_l(THREADID tid, ADDRINT dst,
                                                    uint32_t src) {
-  tag_t dst_tag = get_m2r_tag(dst);
+  tag_t dst_tag = get_m2r_tag(dst, threads_ctx[tid].callstack);
 
   RTAG[src][0] = dst_tag;
 }

@@ -1,4 +1,3 @@
-
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
@@ -18,6 +17,9 @@
   do {                                                                         \
     fprintf(stderr, __VA_ARGS__);                                              \
   } while (0)
+
+
 #else
 
 #endif
+
